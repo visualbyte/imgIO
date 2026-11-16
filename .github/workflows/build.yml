@@ -48,8 +48,18 @@ jobs:
           pyinstaller --noconfirm --clean --windowed --name imgIO
           --collect-all pillow_heif --noupx main.py
 
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        # ditto keeps the bundle's internal symlinks; the artifact service would
+        # otherwise store their targets as full copies and triple the size.
+        run: ditto -c -k --sequesterRsrc --keepParent dist/imgIO.app imgIO-${{ matrix.name }}.zip
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        run: Compress-Archive -Path dist/imgIO -DestinationPath imgIO-${{ matrix.name }}.zip
+
       - uses: actions/upload-artifact@v4
         with:
           name: imgIO-${{ matrix.name }}
-          path: dist/
+          path: imgIO-${{ matrix.name }}.zip
           if-no-files-found: error
