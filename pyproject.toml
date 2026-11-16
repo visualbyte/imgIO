@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "imgio"
+version = "0.1.0"
+description = "Drag-and-drop image converter for macOS and Windows"
+requires-python = ">=3.11"
+dependencies = [
+    # Only the essentials wheel is used: the full PySide6 package also pulls in
+    # Qt WebEngine, around 250 MB of code this app never touches.
+    "PySide6-Essentials==6.12.0",
+    "Pillow>=13.0,<14",
+    "pillow-heif>=1.8,<2",
+]
+
+[project.gui-scripts]
+imgio = "imgio.app:main"
+
+[tool.setuptools.packages.find]
+include = ["imgio*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

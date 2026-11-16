@@ -1,0 +1,55 @@
+name: build
+
+# Manual only: nothing runs on a push. Trigger it from the Actions tab, or with
+#   gh workflow run build.yml
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-26, name: macos-arm64 }
+          - { os: macos-15-intel, name: macos-intel }
+          - { os: windows-2025, name: windows-x64 }
+          - { os: windows-11-arm, name: windows-arm64 }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check imgio tests main.py
+
+      - name: Test
+        run: python -m pytest -q
+
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        run: >
+          pyinstaller --noconfirm --clean --windowed --name imgIO
+          --osx-bundle-identifier com.vishalgupta.imgio
+          --collect-all pillow_heif --noupx main.py
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: >
+          pyinstaller --noconfirm --clean --windowed --name imgIO
+          --collect-all pillow_heif --noupx main.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: imgIO-${{ matrix.name }}
+          path: dist/
+          if-no-files-found: error
